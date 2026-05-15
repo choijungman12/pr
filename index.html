@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>프라임 지분거래소 — 코드 학습 보고서</title>
+<meta name="description" content="prime-fe / prime-be / prime-fe-admin 세 저장소의 구조·API·DB 스키마·배포 파이프라인 통합 분석" />
+<style>
+  :root {
+    --primary: #f97316;
+    --primary-dark: #ea580c;
+    --primary-light: #fed7aa;
+    --primary-bg: #fff7ed;
+    --text-1: #0f172a;
+    --text-2: #334155;
+    --text-3: #64748b;
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --border: #e2e8f0;
+    --border-soft: #f1f5f9;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --info: #0ea5e9;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER / HERO */
+  .hero {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 1.5rem 3rem;
+  }
+  .hero-inner { max-width: 1120px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    background: rgba(249, 115, 22, 0.12);
+    color: var(--primary-dark);
+    border: 1px solid rgba(249, 115, 22, 0.35);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.2;
+    font-weight: 800;
+    color: var(--text-1);
+  }
+  .hero p.subtitle {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 1.05rem;
+    max-width: 760px;
+  }
+  .hero-meta {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    color: var(--text-3);
+    font-size: 0.9rem;
+  }
+  .hero-meta b { color: var(--text-1); font-weight: 600; }
+  .hero-actions {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.625rem 1.1rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    border: 1px solid transparent;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    box-shadow: 0 6px 14px -4px rgba(249, 115, 22, 0.45);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 18px -4px rgba(249, 115, 22, 0.55); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--text-1);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { background: var(--border-soft); }
+
+  /* NAV */
+  nav.toc {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  nav.toc ul {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    list-style: none;
+    display: flex;
+    gap: 0.5rem 1.25rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  nav.toc a {
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 0.25rem 0;
+  }
+  nav.toc a:hover { color: var(--primary-dark); }
+
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  section { margin-bottom: 3.5rem; scroll-margin-top: 60px; }
+  section h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  section h2::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 22px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  section > p.intro {
+    color: var(--text-2);
+    margin: 0 0 1.5rem;
+    max-width: 800px;
+  }
+
+  /* CARDS */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    padding: 1.25rem 1.25rem 1.1rem;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .card:hover { border-color: var(--primary-light); transform: translateY(-1px); }
+  .card h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--text-1);
+  }
+  .card .tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+  .tag-fe   { background: #dbeafe; color: #1d4ed8; }
+  .tag-be   { background: #dcfce7; color: #166534; }
+  .tag-adm  { background: #fef3c7; color: #92400e; }
+  .card ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--text-2);
+    font-size: 0.9rem;
+  }
+  .card ul li { margin-bottom: 0.2rem; }
+
+  /* ARCHITECTURE BOX */
+  .arch {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    font-family: "Cascadia Code", Consolas, Menlo, monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* TABLES */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 0.7rem; background: #fff; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  thead th {
+    background: var(--border-soft);
+    text-align: left;
+    padding: 0.7rem 1rem;
+    color: var(--text-2);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  tbody td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  code.inline {
+    background: var(--border-soft);
+    border-radius: 0.3rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.85em;
+    font-family: "Cascadia Code", Consolas, Menlo, monospace;
+    color: var(--text-1);
+  }
+  .pill {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .pill-ok   { background: #d1fae5; color: #047857; }
+  .pill-miss { background: #fee2e2; color: #b91c1c; }
+  .pill-info { background: #e0f2fe; color: #0369a1; }
+  .pill-warn { background: #fef3c7; color: #92400e; }
+
+  /* CALLOUT */
+  .callout {
+    border-left: 4px solid var(--warn);
+    background: #fffbeb;
+    padding: 1rem 1.25rem;
+    border-radius: 0 0.6rem 0.6rem 0;
+    color: var(--text-2);
+  }
+  .callout strong { color: #92400e; }
+  .callout.danger { border-left-color: var(--err); background: #fef2f2; }
+  .callout.danger strong { color: #b91c1c; }
+  .callout.info { border-left-color: var(--info); background: #f0f9ff; }
+  .callout.info strong { color: #0369a1; }
+  .callout ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    background: #fff;
+    padding: 2rem 1.5rem;
+    color: var(--text-3);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  footer a { color: var(--primary-dark); text-decoration: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .hero { padding: 2rem 1rem 2rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+    section h2 { font-size: 1.35rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <span class="badge">코드 학습 보고서</span>
+    <h1>프라임 지분거래소 — 통합 분석 리포트</h1>
+    <p class="subtitle">
+      <code class="inline">prime-fe</code> · <code class="inline">prime-be</code> · <code class="inline">prime-fe-admin</code>
+      세 저장소의 구조, 모듈, API 엔드포인트, DB 스키마, 배포 파이프라인을 한 문서로 정리한 학습 결과물입니다.
+    </p>
+    <div class="hero-meta">
+      <span><b>서비스</b> 프라임 :: 부동산 지분거래소</span>
+      <span><b>도메인</b> prime2x.com / dev.prime2x.com</span>
+      <span><b>분석일</b> 2026-05-15</span>
+    </div>
+    <div class="hero-actions">
+      <a href="./app/" class="btn btn-primary">prime-fe 미리보기 열기 →</a>
+      <a href="#repos" class="btn btn-secondary">레포 구조 보기</a>
+      <a href="https://github.com/choijungman12/pr" class="btn btn-secondary">GitHub 저장소</a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <ul>
+    <li><a href="#overview">개요</a></li>
+    <li><a href="#repos">저장소</a></li>
+    <li><a href="#architecture">아키텍처</a></li>
+    <li><a href="#api">API 엔드포인트</a></li>
+    <li><a href="#db">DB 스키마</a></li>
+    <li><a href="#deploy">배포</a></li>
+    <li><a href="#issues">발견된 이슈</a></li>
+    <li><a href="#next">다음 단계</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<section id="overview">
+  <h2>1. 서비스 개요</h2>
+  <p class="intro">
+    프라임 지분거래소는 부동산 <b>지분</b>(전체가 아닌 일부)을 거래하기 위한 지도 기반 플랫폼입니다.
+    소액 투자자에게 프리미엄 부동산 투자 기회를 제공하는 것이 목표이며, 사용자 앱·관리자 콘솔·백엔드가 분리된
+    멀티 레포 구조로 운영됩니다.
+  </p>
+  <div class="grid-3">
+    <div class="card">
+      <h3>🗺️ 지도 중심 UX</h3>
+      <p>Naver · Kakao · VWorld 3개 지도 SDK를 동시 지원하며, 줌 레벨에 따라 시·군·구 → 읍·면·동 → 필지 단위로 데이터 농도가 달라지는 점층적 탐색 구조.</p>
+    </div>
+    <div class="card">
+      <h3>💸 지분 거래</h3>
+      <p>토지·아파트·오피스텔·빌딩·경매·도시개발 등 13개 카테고리 패널로 매물·시세·외부거래 정보를 한 화면에서 조회.</p>
+    </div>
+    <div class="card">
+      <h3>🛠️ 관리자 콘솔</h3>
+      <p>매물 등록/검증·문의·회원·게시글 관리. 네이버 미니맵 기반 좌표 미리보기와 토지 등록 워크플로 제공.</p>
+    </div>
+  </div>
+</section>
+
+<section id="repos">
+  <h2>2. 저장소 구성</h2>
+  <p class="intro">세 개의 독립 레포가 GHCR(GitHub Container Registry)을 통해 운영 서버에 배포됩니다.</p>
+  <div class="grid-3">
+    <div class="card">
+      <span class="tag tag-fe">FRONTEND</span>
+      <h3>prime-fe</h3>
+      <p style="color: var(--text-3); font-size: 0.85rem; margin: 0 0 0.5rem;">사용자 프론트엔드 · prime2x.com</p>
+      <ul>
+        <li>CRA + React 18</li>
+        <li>Redux Toolkit + SCSS</li>
+        <li>react-router-dom 7 (BrowserRouter)</li>
+        <li>axios · Firebase · Zustand</li>
+        <li>3개 지도 SDK · 13개 패널</li>
+        <li>브랜치: <code class="inline">master</code> / <code class="inline">develop</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag tag-be">BACKEND</span>
+      <h3>prime-be</h3>
+      <p style="color: var(--text-3); font-size: 0.85rem; margin: 0 0 0.5rem;">NestJS 백엔드 · :3000</p>
+      <ul>
+        <li>NestJS 10 + TypeScript</li>
+        <li>Drizzle ORM + MySQL2</li>
+        <li>Passport (Naver/Kakao/Google/Apple)</li>
+        <li>JWT 인증 + bcrypt</li>
+        <li>RBush 인메모리 공간 인덱스</li>
+        <li>브랜치: <code class="inline">master</code> / <code class="inline">develop</code> / <code class="inline">baek</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag tag-adm">ADMIN</span>
+      <h3>prime-fe-admin</h3>
+      <p style="color: var(--text-3); font-size: 0.85rem; margin: 0 0 0.5rem;">관리자 콘솔</p>
+      <ul>
+        <li>CRA + React 18</li>
+        <li>Zustand + Tailwind CSS</li>
+        <li>feature-first 폴더 구조</li>
+        <li>매물 등록/검증 워크플로</li>
+        <li>X-REQUESTED-WITH 헤더 정책</li>
+        <li>브랜치: <code class="inline">main</code> / <code class="inline">dev</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>3. 아키텍처</h2>
+  <p class="intro">사용자/관리자 두 프론트가 동일한 NestJS 백엔드를 호출하며, 백엔드는 MySQL의 GEOMETRY 컬럼과 부팅 시 로드되는 공간 인덱스를 활용합니다.</p>
+  <div class="arch">┌────────────────────────────┐         ┌──────────────────────────┐
+│ prime-fe (prime2x.com)     │         │ prime-fe-admin           │
+│  React 18 + Redux + SCSS   │         │  React 18 + Zustand      │
+│  Naver / Kakao / VWorld    │         │  Tailwind · 매물 등록    │
+└──────────────┬─────────────┘         └────────────┬─────────────┘
+               │ axios (REACT_APP_BACKEND_URL)       │ axios (REACT_APP_API_BASE_URL)
+               │ withCredentials                     │ + X-REQUESTED-WITH
+               ▼                                     ▼
+       ┌────────────────────────────────────────────────────────┐
+       │  prime-be  (NestJS 10, port 3000)                      │
+       │  ┌─────────┐ ┌──────┐ ┌─────────┐ ┌──────────────────┐ │
+       │  │ auth/   │ │ user │ │ polygon │ │ polygon-trans... │ │
+       │  └─────────┘ └──────┘ └─────────┘ └──────────────────┘ │
+       │  ┌────────────┐ ┌──────────┐                           │
+       │  │ geocoding  │ │ drizzle  │                           │
+       │  └────────────┘ └──────────┘                           │
+       │                                                        │
+       │  ◇ onModuleInit → data/polygon/index/*.index.json      │
+       │    → RBush in-memory spatial index                     │
+       └────┬─────────────────────────────────┬─────────────────┘
+            │ Drizzle ORM (mysql2 pool)       │ HTTPS
+            ▼                                  ▼
+       ┌─────────────────────────┐       ┌──────────────────────┐
+       │  MySQL                  │       │  V-World API         │
+       │   · seoul / busan / ... │       │  Naver / Kakao API   │
+       │   · GEOMETRY 컬럼       │       └──────────────────────┘
+       │   · ST_Intersects/MBR   │
+       └─────────────────────────┘</div>
+</section>
+
+<section id="api">
+  <h2>4. API 엔드포인트 (prime-be)</h2>
+  <p class="intro">현재 prime-be에 구현된 컨트롤러 기준입니다. 사용자/관리자 프론트가 호출하는 경로를 함께 표기했습니다.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>모듈</th>
+          <th>메서드</th>
+          <th>경로</th>
+          <th>설명</th>
+          <th>호출처</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>auth</td><td>POST</td><td><code class="inline">/auth/login</code></td><td>일반 로그인 (이메일/비밀번호)</td><td>prime-fe</td></tr>
+        <tr><td>auth</td><td>GET</td><td><code class="inline">/auth/logout</code></td><td>로그아웃</td><td>prime-fe</td></tr>
+        <tr><td>oauth</td><td>GET</td><td><code class="inline">/oauth/{naver|kakao|google}/login</code></td><td>소셜 로그인 시작</td><td>prime-fe</td></tr>
+        <tr><td>oauth</td><td>GET</td><td><code class="inline">/oauth/{provider}/callback</code></td><td>소셜 로그인 콜백</td><td>provider</td></tr>
+        <tr><td>oauth</td><td>GET/POST</td><td><code class="inline">/oauth/apple/{login|callback}</code></td><td>애플 로그인 (별도 흐름)</td><td>prime-fe</td></tr>
+        <tr><td>user</td><td>POST</td><td><code class="inline">/user/sign-up</code></td><td>일반 회원가입</td><td>prime-fe</td></tr>
+        <tr><td>user</td><td>GET</td><td><code class="inline">/user/info</code></td><td>내 정보 조회 (JWT)</td><td>prime-fe</td></tr>
+        <tr><td>user</td><td>POST</td><td><code class="inline">/user/social/link</code></td><td>소셜 계정 연동 (JWT)</td><td>prime-fe</td></tr>
+        <tr><td>polygon</td><td>GET</td><td><code class="inline">/polygon/point</code></td><td>좌표 → 필지 폴리곤</td><td>prime-fe / admin</td></tr>
+        <tr><td>polygon</td><td>GET</td><td><code class="inline">/polygon/sgg</code></td><td>시·군·구 폴리곤 (zoom 11~13)</td><td>prime-fe</td></tr>
+        <tr><td>polygon</td><td>GET</td><td><code class="inline">/polygon/emd</code></td><td>읍·면·동 폴리곤 (zoom 14~16)</td><td>prime-fe</td></tr>
+        <tr><td>polygon</td><td>GET</td><td><code class="inline">/polygon/publichouse</code></td><td>공공주택 폴리곤</td><td>prime-fe</td></tr>
+        <tr><td>polygon-trans</td><td>GET</td><td><code class="inline">/polygon/transactions</code></td><td>실거래 필지 (zoom 17+)</td><td>prime-fe</td></tr>
+        <tr><td>polygon-trans</td><td>POST</td><td><code class="inline">/polygon/complex</code></td><td>커스텀 폴리곤 영역 조회</td><td>prime-fe</td></tr>
+        <tr><td>geocoding</td><td>GET</td><td><code class="inline">/geocoding</code></td><td>주소 → 좌표</td><td>prime-fe / admin</td></tr>
+        <tr><td>geocoding</td><td>GET</td><td><code class="inline">/geocoding/reverse</code></td><td>좌표 → 주소</td><td>prime-fe</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="db">
+  <h2>5. DB 스키마</h2>
+  <p class="intro">MySQL을 사용하며 Drizzle ORM으로 정의된 스키마는 두 그룹으로 나뉩니다.</p>
+
+  <h3 style="margin-top: 1.5rem; font-size: 1.05rem; color: var(--text-2);">▸ 공통 스키마 (<code class="inline">drizzle/schema-common/</code>)</h3>
+  <div class="tbl-wrap" style="margin-top: 0.5rem;">
+    <table>
+      <thead><tr><th>테이블</th><th>주요 컬럼</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code class="inline">user</code></td>
+          <td>id, email(unique), password, phone, gender, name, social_naver/kakao/google/apple, status</td>
+          <td>이메일은 64자 unique. 소셜 연동 여부는 tinyint 플래그</td>
+        </tr>
+        <tr>
+          <td><code class="inline">social_account</code></td>
+          <td>id, user_id, social_user_email, provider, client, social_id, status</td>
+          <td><code class="inline">(provider, client, social_id)</code> 복합 unique. client는 prime 고정</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top: 1.5rem; font-size: 1.05rem; color: var(--text-2);">▸ 지역 스키마 (<code class="inline">drizzle/schema/</code>)</h3>
+  <p style="color: var(--text-2); font-size: 0.92rem;">시·도 단위 17개 테이블이 동일 구조로 정의됩니다.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>그룹</th><th>테이블</th></tr></thead>
+      <tbody>
+        <tr><td>수도권</td><td><code class="inline">seoul · gyeonggi · incheon</code></td></tr>
+        <tr><td>충청</td><td><code class="inline">daejeon · sejong · chungcheongbuk · chungcheongnam</code></td></tr>
+        <tr><td>경상</td><td><code class="inline">busan · daegu · ulsan · gyeongsangbuk · gyeongsangnam</code></td></tr>
+        <tr><td>전라</td><td><code class="inline">gwangju · jeollabuk · jeollanam</code></td></tr>
+        <tr><td>강원/제주</td><td><code class="inline">gangwon · jeju</code></td></tr>
+        <tr><td>기타</td><td><code class="inline">homestead · publichouse · city</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top: 1rem; color: var(--text-2); font-size: 0.92rem;">
+    각 지역 테이블은 <code class="inline">geo (GEOMETRY)</code>, <code class="inline">point (TEXT)</code>, <code class="inline">data (LONGTEXT JSON)</code>, <code class="inline">amount (BIGINT)</code>, <code class="inline">year/month/day</code> 등을 공통으로 가지며,
+    공간 질의는 <code class="inline">ST_Intersects</code> / <code class="inline">MBRIntersects</code>로 수행됩니다.
+    부팅 시점에 <code class="inline">data/polygon/index/*.index.json</code>을 읽어 RBush 메모리 인덱스를 구축합니다.
+  </p>
+</section>
+
+<section id="deploy">
+  <h2>6. 배포 파이프라인</h2>
+  <p class="intro">세 레포 모두 GitHub Actions → GHCR → SSH → docker compose 흐름을 따릅니다.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>레포</th><th>트리거 브랜치</th><th>이미지</th><th>서버 경로</th><th>compose 파일</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>prime-fe</td>
+          <td><code class="inline">master</code> / <code class="inline">develop</code></td>
+          <td><code class="inline">ghcr.io/return-plus/prime-fe:latest</code></td>
+          <td><code class="inline">/var/www/html/prime</code></td>
+          <td><code class="inline">docker-compose.fe.yaml</code></td>
+        </tr>
+        <tr>
+          <td>prime-be</td>
+          <td><code class="inline">master</code> / <code class="inline">develop</code></td>
+          <td><code class="inline">ghcr.io/return-plus/prime-be:latest</code></td>
+          <td><code class="inline">/var/www/html/prime</code></td>
+          <td><code class="inline">docker-compose.be.yaml</code></td>
+        </tr>
+        <tr>
+          <td>prime-fe-admin</td>
+          <td><code class="inline">main</code> / <code class="inline">dev</code></td>
+          <td><code class="inline">ghcr.io/return-plus/prime-fe-admin:latest</code></td>
+          <td><code class="inline">/var/www/html/prime_admin</code></td>
+          <td><code class="inline">docker-compose.fe.yaml</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top: 1rem; color: var(--text-2); font-size: 0.92rem;">
+    환경변수는 모두 GitHub Secrets에서 주입됩니다 (DB 자격증명·OAuth 클라이언트·지도 API 키·Firebase·JWT 시크릿 등).
+    배포 도커파일은 <code class="inline">node:20-alpine</code>(FE/Admin) 및 <code class="inline">node:22-alpine + pnpm</code>(BE)를 사용합니다.
+  </p>
+</section>
+
+<section id="issues">
+  <h2>7. 발견된 이슈 / 의사결정 필요 사항</h2>
+
+  <div class="callout danger" style="margin-bottom: 1rem;">
+    <strong>⚠ 관리자 ↔ 백엔드 API 간극</strong>
+    <p style="margin: 0.4rem 0 0;">prime-fe-admin이 호출하는 다음 엔드포인트들이 현재 prime-be에는 구현되어 있지 않습니다.</p>
+    <ul>
+      <li><code class="inline">POST /sign/in</code> · <code class="inline">GET /sign/out</code> <span class="pill pill-miss">미구현</span></li>
+      <li><code class="inline">POST /land/register</code> · <code class="inline">GET /land/table</code> <span class="pill pill-miss">미구현</span></li>
+      <li><code class="inline">/polygon/point</code> · <code class="inline">/geocoding</code> <span class="pill pill-ok">존재함</span></li>
+    </ul>
+    <p style="margin: 0.5rem 0 0;">
+      prime-fe-admin README에 <code class="inline">REACT_APP_API_BASE_URL</code>이 "별도 API 서버"일 수 있다고 명시되어 있어,
+      <b>별도 admin-be 레포가 존재</b>하거나 <b>prime-be에 신규 모듈을 추가해야</b> 합니다.
+    </p>
+  </div>
+
+  <div class="callout">
+    <strong>📝 그 외 관찰 사항</strong>
+    <ul>
+      <li>prime-fe README가 기본 CRA 템플릿 그대로이며, 프로젝트 고유의 실행/환경변수 가이드가 부재합니다.</li>
+      <li>prime-be 루트에 <code class="inline">localhost-key.pem</code>, <code class="inline">localhost.pem</code> 개발용 TLS 키가 커밋되어 있어 공개 레포에는 부적합합니다.</li>
+      <li>prime-fe-admin의 부동산 매물 데이터는 일부 모킹 상태 (<code class="inline">features/property/mocks/</code>) → 실 API 연동 필요.</li>
+      <li>prime-fe-admin의 인증 만료 정책이 클라이언트 사이드 <code class="inline">expiresAt</code>에만 의존 (서버 검증 없음).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="next">
+  <h2>8. 다음 단계 제안</h2>
+  <ol style="color: var(--text-2); margin: 0; padding-left: 1.4rem;">
+    <li><b>모노레포 구조 확정</b> — 세 레포를 어떤 형태로 합칠지(폴더 분리 / 워크스페이스 / submodule)</li>
+    <li><b>관리자 API 정책 결정</b> — 별도 admin-be 추가 클론 vs prime-be에 신규 모듈 추가</li>
+    <li><b>로컬 실행 환경 표준화</b> — <code class="inline">.env.example</code> 정비, docker-compose for local dev, README 갱신</li>
+    <li><b>보안 처리</b> — TLS 키 파일 git history 정리, JWT 만료 정책 통일</li>
+    <li><b>UI/UX 점검</b> — 디자인 마이그레이션 가이드 반영, 모바일/반응형 확인</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <p style="margin: 0;">
+    이 문서는 코드베이스 학습 결과를 정리한 정적 보고서입니다.
+    <a href="./app/">prime-fe 미리보기</a> ·
+    <a href="https://github.com/choijungman12/pr">GitHub 저장소</a>
+  </p>
+  <p style="margin: 0.5rem 0 0;">© 2026 Prime 지분거래소 학습 보고서</p>
+</footer>
+
+</body>
+</html>
