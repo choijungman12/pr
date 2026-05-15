@@ -464,6 +464,10 @@
         <tr><td>polygon-trans</td><td>POST</td><td><code class="inline">/polygon/complex</code></td><td>커스텀 폴리곤 영역 조회</td><td>prime-fe</td></tr>
         <tr><td>geocoding</td><td>GET</td><td><code class="inline">/geocoding</code></td><td>주소 → 좌표</td><td>prime-fe / admin</td></tr>
         <tr><td>geocoding</td><td>GET</td><td><code class="inline">/geocoding/reverse</code></td><td>좌표 → 주소</td><td>prime-fe</td></tr>
+        <tr style="background:#f0f9ff;"><td>sign <span class="pill pill-ok">신규</span></td><td>POST</td><td><code class="inline">/sign/in</code></td><td>관리자 로그인 (login_id/password)</td><td>prime-fe-admin</td></tr>
+        <tr style="background:#f0f9ff;"><td>sign <span class="pill pill-ok">신규</span></td><td>GET</td><td><code class="inline">/sign/out</code></td><td>관리자 로그아웃</td><td>prime-fe-admin</td></tr>
+        <tr style="background:#f0f9ff;"><td>land <span class="pill pill-ok">신규</span></td><td>GET</td><td><code class="inline">/land/table</code></td><td>등록 가능한 지역 코드 목록 (17개 시·도)</td><td>prime-fe-admin</td></tr>
+        <tr style="background:#f0f9ff;"><td>land <span class="pill pill-ok">신규</span></td><td>POST</td><td><code class="inline">/land/register</code></td><td>토지 매물 등록 (region_article 테이블 insert)</td><td>prime-fe-admin</td></tr>
       </tbody>
     </table>
   </div>
@@ -556,39 +560,50 @@
 <section id="issues">
   <h2>7. 발견된 이슈 / 의사결정 필요 사항</h2>
 
-  <div class="callout danger" style="margin-bottom: 1rem;">
-    <strong>⚠ 관리자 ↔ 백엔드 API 간극</strong>
-    <p style="margin: 0.4rem 0 0;">prime-fe-admin이 호출하는 다음 엔드포인트들이 현재 prime-be에는 구현되어 있지 않습니다.</p>
+  <div class="callout info" style="margin-bottom: 1rem;">
+    <strong>✅ 관리자 ↔ 백엔드 API 간극 해소 (이 monorepo에서 적용)</strong>
+    <p style="margin: 0.4rem 0 0;">prime-fe-admin이 호출하던 누락 엔드포인트를 prime-be에 신규 모듈로 추가했습니다.</p>
     <ul>
-      <li><code class="inline">POST /sign/in</code> · <code class="inline">GET /sign/out</code> <span class="pill pill-miss">미구현</span></li>
-      <li><code class="inline">POST /land/register</code> · <code class="inline">GET /land/table</code> <span class="pill pill-miss">미구현</span></li>
-      <li><code class="inline">/polygon/point</code> · <code class="inline">/geocoding</code> <span class="pill pill-ok">존재함</span></li>
+      <li><code class="inline">POST /sign/in</code> · <code class="inline">GET /sign/out</code> <span class="pill pill-ok">구현 완료</span> — <code class="inline">src/sign/</code></li>
+      <li><code class="inline">POST /land/register</code> · <code class="inline">GET /land/table</code> <span class="pill pill-ok">구현 완료</span> — <code class="inline">src/land/</code></li>
+      <li>admin 테이블 + <code class="inline">AdminJwtGuard</code> + admin 쿠키(<code class="inline">admin_action_asid</code>) 분리</li>
+      <li>CORS 허용 origin에 dev 포트(3001/3002) 추가</li>
     </ul>
-    <p style="margin: 0.5rem 0 0;">
-      prime-fe-admin README에 <code class="inline">REACT_APP_API_BASE_URL</code>이 "별도 API 서버"일 수 있다고 명시되어 있어,
-      <b>별도 admin-be 레포가 존재</b>하거나 <b>prime-be에 신규 모듈을 추가해야</b> 합니다.
-    </p>
   </div>
 
   <div class="callout">
-    <strong>📝 그 외 관찰 사항</strong>
+    <strong>📝 그 외 관찰 사항 / 해소 현황</strong>
     <ul>
-      <li>prime-fe README가 기본 CRA 템플릿 그대로이며, 프로젝트 고유의 실행/환경변수 가이드가 부재합니다.</li>
-      <li>prime-be 루트에 <code class="inline">localhost-key.pem</code>, <code class="inline">localhost.pem</code> 개발용 TLS 키가 커밋되어 있어 공개 레포에는 부적합합니다.</li>
-      <li>prime-fe-admin의 부동산 매물 데이터는 일부 모킹 상태 (<code class="inline">features/property/mocks/</code>) → 실 API 연동 필요.</li>
-      <li>prime-fe-admin의 인증 만료 정책이 클라이언트 사이드 <code class="inline">expiresAt</code>에만 의존 (서버 검증 없음).</li>
+      <li>prime-be 루트의 <code class="inline">localhost-key.pem</code>, <code class="inline">localhost.pem</code> 개발용 TLS 키 <span class="pill pill-ok">monorepo에서 제거</span></li>
+      <li>prime-be README 기본 NestJS 템플릿 → <span class="pill pill-ok">로컬 실행 가이드로 교체</span></li>
+      <li>prime-fe / prime-fe-admin <span class="pill pill-ok"><code class="inline">.env.example</code> 추가</span> (PORT 3001/3002 분리)</li>
+      <li>prime-fe 디자인 토큰을 <span class="pill pill-ok">CSS Custom Properties로 중앙화</span> (Tailwind theme 자동 연동)</li>
+      <li>prime-fe-admin의 부동산 매물 데이터는 일부 모킹 상태 (<code class="inline">features/property/mocks/</code>) <span class="pill pill-warn">실 API 연동 필요</span></li>
+      <li>prime-fe-admin의 인증 만료 정책이 클라이언트 사이드 <code class="inline">expiresAt</code>에만 의존 <span class="pill pill-warn">서버 검증 강화 필요</span></li>
     </ul>
   </div>
 </section>
 
 <section id="next">
-  <h2>8. 다음 단계 제안</h2>
+  <h2>8. 진행 현황 / 다음 단계</h2>
+  <p class="intro">A~D 항목을 monorepo (<a href="https://github.com/choijungman12/pr" style="color:var(--primary-dark);">choijungman12/pr · main 브랜치</a>)에 반영했습니다.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>항목</th><th>상태</th><th>주요 산출물</th></tr></thead>
+      <tbody>
+        <tr><td>A) 모노레포 구조 확정</td><td><span class="pill pill-ok">완료</span></td><td>3개 폴더 통합, 루트 README, .gitignore, 민감파일 제거</td></tr>
+        <tr><td>B) 로컬 실행 환경 표준화</td><td><span class="pill pill-ok">완료</span></td><td>docker-compose.local.yaml, init-local.sql, .env.example 3종</td></tr>
+        <tr><td>C) 관리자 API 간극 해소</td><td><span class="pill pill-ok">완료</span></td><td>sign/land 모듈, admin 스키마, AdminJwtGuard</td></tr>
+        <tr><td>D) UI/UX 디자인 토큰</td><td><span class="pill pill-ok">완료</span></td><td>:root CSS 변수, Tailwind theme 연동</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top: 1.25rem; color: var(--text-2);">남은 작업 후보:</p>
   <ol style="color: var(--text-2); margin: 0; padding-left: 1.4rem;">
-    <li><b>모노레포 구조 확정</b> — 세 레포를 어떤 형태로 합칠지(폴더 분리 / 워크스페이스 / submodule)</li>
-    <li><b>관리자 API 정책 결정</b> — 별도 admin-be 추가 클론 vs prime-be에 신규 모듈 추가</li>
-    <li><b>로컬 실행 환경 표준화</b> — <code class="inline">.env.example</code> 정비, docker-compose for local dev, README 갱신</li>
-    <li><b>보안 처리</b> — TLS 키 파일 git history 정리, JWT 만료 정책 통일</li>
-    <li><b>UI/UX 점검</b> — 디자인 마이그레이션 가이드 반영, 모바일/반응형 확인</li>
+    <li><b>매물 데이터 실 API 연동</b> — prime-fe-admin의 <code class="inline">features/property/mocks/</code> 의존 제거</li>
+    <li><b>관리자 세션 서버 검증</b> — 클라이언트 <code class="inline">expiresAt</code> 외에도 <code class="inline">/admin/me</code> 같은 검증 엔드포인트 추가</li>
+    <li><b>Drizzle 마이그레이션 도입</b> — <code class="inline">init-local.sql</code> 부트스트랩을 정식 migration으로 전환</li>
+    <li><b>e2e 테스트 추가</b> — prime-be의 test/ 폴더 활용</li>
   </ol>
 </section>
 
