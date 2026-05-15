@@ -1,0 +1,79 @@
+name: BE Build & Push
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/prime-be:latest .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository_owner }}/prime-be:latest
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ github.ref == 'refs/heads/master' && secrets.PROD_SERVER_HOST || secrets.DEV_SERVER_HOST }}
+          username: ${{ github.ref == 'refs/heads/master' && secrets.PROD_SERVER_USER || secrets.DEV_SERVER_USER }}
+          key: ${{ github.ref == 'refs/heads/master' && secrets.PROD_SERVER_SSH_KEY || secrets.DEV_SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            export FRONTEND_URL='${{ github.ref == 'refs/heads/master' && secrets.FRONT_URL || secrets.DEV_FRONT_URL }}'
+            export NAVER_API_URL='${{ secrets.NAVER_API_URL }}'
+            export NAVER_CLIENT_ID='${{ secrets.NAVER_CLIENT_ID }}'
+            export NAVER_CLIENT_SECRET='${{ secrets.NAVER_CLIENT_SECRET }}'
+            export VWORLD_API_KEY='${{ secrets.VWORLD_API_KEY }}'
+            export VWORLD_DOMAIN='${{ secrets.VWORLD_DOMAIN }}'
+            export DB_HOSTNAME='${{ github.ref == 'refs/heads/master' && secrets.DB_HOSTNAME || secrets.DEV_DB_HOSTNAME }}'
+            export DB_PORT='${{ secrets.DB_PORT }}'
+            export DB_USER='${{ github.ref == 'refs/heads/master' && secrets.DB_USER || secrets.DEV_DB_USER }}'
+            export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
+            export DB_DATABASE='${{ secrets.DB_DATABASE }}'
+            export NAVER_LOGIN_CLIENT_ID='${{ github.ref == 'refs/heads/master' && secrets.NAVER_LOGIN_CLIENT_ID || secrets.DEV_NAVER_LOGIN_CLIENT_ID }}'
+            export NAVER_LOGIN_CLIENT_SECRET='${{ github.ref == 'refs/heads/master' && secrets.NAVER_LOGIN_CLIENT_SECRET || secrets.DEV_NAVER_LOGIN_CLIENT_SECRET }}'
+            export NAVER_LOGIN_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.NAVER_LOGIN_REDIRECT_URI || secrets.DEV_NAVER_LOGIN_REDIRECT_URI }}'
+            export KAKAO_CLIENT_ID='${{ github.ref == 'refs/heads/master' && secrets.KAKAO_CLIENT_ID || secrets.DEV_KAKAO_CLIENT_ID }}'
+            export KAKAO_CLIENT_SECRET='${{ github.ref == 'refs/heads/master' && secrets.KAKAO_CLIENT_SECRET || secrets.DEV_KAKAO_CLIENT_SECRET }}'
+            export KAKAO_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.KAKAO_REDIRECT_URI || secrets.DEV_KAKAO_REDIRECT_URI }}'
+            export GOOGLE_CLIENT_ID='${{ github.ref == 'refs/heads/master' && secrets.GOOGLE_CLIENT_ID || secrets.DEV_GOOGLE_CLIENT_ID }}'
+            export GOOGLE_CLIENT_SECRET='${{ github.ref == 'refs/heads/master' && secrets.GOOGLE_CLIENT_SECRET || secrets.DEV_GOOGLE_CLIENT_SECRET }}'
+            export GOOGLE_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.GOOGLE_REDIRECT_URI || secrets.DEV_GOOGLE_REDIRECT_URI }}'
+            export APPLE_CLIENT_ID='${{ github.ref == 'refs/heads/master' && secrets.APPLE_CLIENT_ID || secrets.DEV_APPLE_CLIENT_ID }}'
+            export APPLE_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.APPLE_REDIRECT_URI || secrets.DEV_APPLE_REDIRECT_URI }}'
+            export COMMON_DB_HOST='${{ github.ref == 'refs/heads/master' && secrets.COMMON_DB_HOST || secrets.DEV_DB_HOSTNAME }}'
+            export COMMON_DB_USER='${{ github.ref == 'refs/heads/master' && secrets.COMMON_DB_USER || secrets.DEV_DB_USER }}'
+            export COMMON_DB_PASSWORD='${{ secrets.COMMON_DB_PASSWORD }}'
+            export COMMON_DB_PORT='${{ secrets.COMMON_DB_PORT }}'
+            export COMMON_DB_NAME='${{ secrets.COMMON_DB_NAME }}'
+            export PRIME_LOGIN_SUCCESS_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.PRIME_LOGIN_SUCCESS_REDIRECT_URI || secrets.DEV_PRIME_LOGIN_SUCCESS_REDIRECT_URI }}'
+            export PRIME_SOCIAL_LINK_REDIRECT_URI='${{ github.ref == 'refs/heads/master' && secrets.PRIME_SOCIAL_LINK_REDIRECT_URI || secrets.DEV_PRIME_SOCIAL_LINK_REDIRECT_URI }}'
+            export JWT_TOKEN_SECRET_KEY='${{ secrets.JWT_TOKEN_SECRET_KEY }}'
+            export NODE_ENV=production
+            GHCR_TOKEN=${{ secrets.GHCR_TOKEN }}
+            GHCR_USERNAME=${{ secrets.GHCR_USERNAME }}
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+            cd /var/www/html/prime
+            docker compose -f docker-compose.be.yaml pull
+            docker system prune -a --volumes -f
+            docker compose -f docker-compose.be.yaml down
+            docker compose -f docker-compose.be.yaml up -d 
+            docker logout ghcr.io 

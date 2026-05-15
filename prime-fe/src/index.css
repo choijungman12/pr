@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────
+ * 디자인 토큰 (Single Source of Truth)
+ * 가이드: prime-fe-ui-migration-guide.md
+ * tailwind.config.js에서 이 변수들을 참조함
+ * ─────────────────────────────────────────────────────────── */
+:root {
+  /* === Primary === */
+  --color-primary: #f97316;        /* orange-500 */
+  --color-primary-dark: #ea580c;   /* orange-600 */
+  --color-primary-light: #fed7aa;  /* orange-200 */
+  --color-primary-bg: #fff7ed;     /* orange-50  */
+
+  /* === 기능별 카테고리 === */
+  --color-sale: #f43f5e;           /* rose-500   매매 */
+  --color-rent: #0ea5e9;           /* sky-500    전월세 */
+  --color-presale: #10b981;        /* emerald-500 분양 */
+  --color-auction: #f59e0b;        /* amber-500  경매 */
+  --color-development: #8b5cf6;    /* violet-500 개발 */
+
+  /* === 중립 (배경) === */
+  --color-bg-page: #f8fafc;        /* slate-50 */
+  --color-bg-white: #ffffff;
+  --color-bg-light: #f1f5f9;       /* slate-100 */
+  --color-bg-hover: #f8fafc;       /* slate-50  */
+
+  /* === 중립 (텍스트) === */
+  --color-text-primary: #111827;   /* gray-900 */
+  --color-text-secondary: #374151; /* gray-700 */
+  --color-text-tertiary: #6b7280;  /* gray-500 */
+  --color-text-disabled: #9ca3af;  /* gray-400 */
+
+  /* === 경계선 === */
+  --color-border: #e2e8f0;         /* slate-200 */
+  --color-border-light: #f1f5f9;   /* slate-100 */
+
+  /* === 그림자 === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-orange: 0 10px 15px -3px rgba(249, 115, 22, 0.3);
+  --shadow-orange-hover: 0 12px 20px -3px rgba(249, 115, 22, 0.4);
+
+  /* === 모서리 === */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* === 트랜지션 === */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* === 레이아웃 === */
+  --header-height: 3.5rem;
+  --left-toolbar-width: 4rem;
+  --right-sidebar-width: 320px;
+
+  /* === Z-Index === */
+  --z-base: 0;
+  --z-marker: 10;
+  --z-toolbar: 20;
+  --z-overlay: 30;
+  --z-sidebar: 40;
+  --z-modal: 50;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 기본 리셋
+ * ─────────────────────────────────────────────────────────── */
+* {
+  font-family: 'Noto Sans KR', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 3D 버튼 효과
+ * ─────────────────────────────────────────────────────────── */
+.btn-3d {
+  transform: translateY(0);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-fast);
+}
+.btn-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2), 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+.btn-3d:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 그라디언트 Primary 버튼 */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  box-shadow: var(--shadow-orange);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-orange-hover);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 글래스 / 그라디언트 텍스트
+ * ─────────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.writing-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* 카드 기본 스타일 */
+.card-base {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 슬라이드 패널 애니메이션
+ * ─────────────────────────────────────────────────────────── */
+.slide-in-left  { animation: slideInLeft  0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.slide-in-up    { animation: slideInUp    0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);      opacity: 1; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes slideInUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* 호버 리프트 */
+.hover-lift {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* 마커 펄스 */
+.pulse-marker { animation: pulseMarker 2s infinite; }
+@keyframes pulseMarker {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%      { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * 커스텀 스크롤바
+ * ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; }
+::-webkit-scrollbar-track    { background: var(--color-bg-light); }
+::-webkit-scrollbar-thumb    { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─────────────────────────────────────────────────────────────
+ * 탭/뱃지 효과
+ * ─────────────────────────────────────────────────────────── */
+.tab-glow {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+}
+
+.gradient-border { position: relative; }
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+/* 카테고리별 컬러 dot */
+.dot-sale       { background: var(--color-sale);        }
+.dot-rent       { background: var(--color-rent);        }
+.dot-presale    { background: var(--color-presale);     }
+.dot-auction    { background: var(--color-auction);     }
+.dot-development{ background: var(--color-development); }
+
+/* ─────────────────────────────────────────────────────────────
+ * 반응형 유틸리티
+ * ─────────────────────────────────────────────────────────── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* hover 미지원 디바이스 — 모바일 터치 hover 무시 */
+@media (hover: none) {
+  .hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-3d:hover {
+    transform: translateY(0);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 애니메이션 성능 최적화 */
+.slide-in-right,
+.slide-in-left,
+.slide-in-up {
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* 움직임 줄이기 환경설정 존중 */
+@media (prefers-reduced-motion: reduce) {
+  .slide-in-right,
+  .slide-in-left,
+  .slide-in-up {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+  .pulse-marker { animation: none; }
+}

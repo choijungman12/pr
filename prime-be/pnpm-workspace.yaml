@@ -1,0 +1,7 @@
+packages:
+  - 'src/**'
+  - 'test/**'
+allowBuilds:
+  '@nestjs/core': true
+  bcrypt: true
+  esbuild: true
